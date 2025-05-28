@@ -1,0 +1,4 @@
+server=192.168.10.121
+uid=root
+password=
+database=bamboo_grill

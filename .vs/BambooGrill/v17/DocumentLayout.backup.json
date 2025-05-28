@@ -1,0 +1,145 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|c:\\users\\gabriel\\source\\repos\\bamboonotfinal-master\\bamboonotfinal-master\\bamboogrill\\dashboard.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}",
+      "RelativeMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|solutionrelative:bamboogrill\\dashboard.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\bamboogrill\\dashboard.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}|Form",
+      "RelativeMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|solutionrelative:bamboogrill\\dashboard.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\bamboogrill\\form1.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}|Form",
+      "RelativeMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|solutionrelative:bamboogrill\\form1.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\bamboogrill\\moddb.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}",
+      "RelativeMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|solutionrelative:bamboogrill\\moddb.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\bamboogrill\\form1.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}",
+      "RelativeMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|solutionrelative:bamboogrill\\form1.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Form1.vb",
+              "DocumentMoniker": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\Form1.vb",
+              "RelativeDocumentMoniker": "BambooGrill\\Form1.vb",
+              "ToolTip": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\Form1.vb",
+              "RelativeToolTip": "BambooGrill\\Form1.vb",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003361|",
+              "WhenOpened": "2025-04-28T08:10:16.817Z",
+              "IsPinned": true
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Dashboard.vb",
+              "DocumentMoniker": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\Dashboard.vb",
+              "RelativeDocumentMoniker": "BambooGrill\\Dashboard.vb",
+              "ToolTip": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\Dashboard.vb",
+              "RelativeToolTip": "BambooGrill\\Dashboard.vb",
+              "ViewState": "AgIAACgFAAAAAAAAAADwvxYFAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003361|",
+              "WhenOpened": "2025-05-01T19:14:46.625Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:1:0:{e8034f19-ab72-4f06-83fd-f6832b41aa63}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:2:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:3:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:4:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:1:0:{d212f56b-c48a-434c-a121-1c5d80b59b9f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Dashboard.vb [Design]",
+              "DocumentMoniker": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\Dashboard.vb",
+              "RelativeDocumentMoniker": "BambooGrill\\Dashboard.vb",
+              "ToolTip": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\Dashboard.vb [Design]",
+              "RelativeToolTip": "BambooGrill\\Dashboard.vb [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003361|",
+              "WhenOpened": "2025-04-28T07:56:50.145Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Form1.vb [Design]",
+              "DocumentMoniker": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\Form1.vb",
+              "RelativeDocumentMoniker": "BambooGrill\\Form1.vb",
+              "ToolTip": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\Form1.vb [Design]",
+              "RelativeToolTip": "BambooGrill\\Form1.vb [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003361|",
+              "WhenOpened": "2025-05-01T19:16:27.774Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "moddb.vb",
+              "DocumentMoniker": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\moddb.vb",
+              "RelativeDocumentMoniker": "BambooGrill\\moddb.vb",
+              "ToolTip": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\moddb.vb",
+              "RelativeToolTip": "BambooGrill\\moddb.vb",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAmwBoAAAALAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003361|",
+              "WhenOpened": "2025-04-28T11:25:43.901Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

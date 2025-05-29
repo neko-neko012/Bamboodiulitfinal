@@ -3,11 +3,11 @@
   "WorkspaceRootPath": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|c:\\users\\gabriel\\source\\repos\\bamboonotfinal-master\\bamboonotfinal-master\\bamboogrill\\dashboard.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}",
+      "AbsoluteMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\bamboogrill\\dashboard.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}",
       "RelativeMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|solutionrelative:bamboogrill\\dashboard.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\bamboogrill\\dashboard.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}|Form",
+      "AbsoluteMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|c:\\users\\gabriel\\source\\repos\\bamboonotfinal-master\\bamboonotfinal-master\\bamboogrill\\dashboard.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}|Form",
       "RelativeMoniker": "D:0:0:{B6EE612B-E636-4E24-9AB8-5A8196ABA5E3}|BambooGrill\\BambooGrill.vbproj|solutionrelative:bamboogrill\\dashboard.vb||{2C015C70-C72C-11D0-88C3-00A0C9110049}|Form"
     },
     {
@@ -53,7 +53,7 @@
               "RelativeDocumentMoniker": "BambooGrill\\Dashboard.vb",
               "ToolTip": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\Dashboard.vb",
               "RelativeToolTip": "BambooGrill\\Dashboard.vb",
-              "ViewState": "AgIAACgFAAAAAAAAAADwvxYFAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAJUAAAAAAAAAAAAwwJ8AAAAbAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003361|",
               "WhenOpened": "2025-05-01T19:14:46.625Z",
               "IsPinned": true,
@@ -112,7 +112,8 @@
               "ToolTip": "C:\\Users\\Gabriel\\source\\repos\\Bamboonotfinal-master\\Bamboonotfinal-master\\BambooGrill\\Dashboard.vb [Design]",
               "RelativeToolTip": "BambooGrill\\Dashboard.vb [Design]",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003361|",
-              "WhenOpened": "2025-04-28T07:56:50.145Z"
+              "WhenOpened": "2025-04-28T07:56:50.145Z",
+              "EditorCaption": " [Design]"
             },
             {
               "$type": "Document",

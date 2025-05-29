@@ -40,6 +40,17 @@ Public Class Dashboard
         ' Check role and hide buttons if cashier
 
     End Sub
+    Public Class TempOrderItem
+        Public Property TempID As String
+        Public Property CID As String
+        Public Property ItemName As String
+        Public Property Quantity As String
+        Public Property TableNumber As String
+        Public Property TransactionType As String
+        Public Property OrderStatus As String
+        Public Property TimeRecorded As String
+        Public Property DateRecorded As String
+    End Class
 
     Private Sub Dashboard_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         timer.Interval = 1000 ' 1000 milliseconds = 1 second
@@ -145,16 +156,15 @@ Public Class Dashboard
 
         LoadTotalCustomers()
         LoadTotalSales()
-        LoadTotalEmployees()
+
         LoadTotalExpenses()
 
 
-        dbsalescombobox.Items.AddRange({"This Day", "This Week", "This Month", "This Year"})
-        dbsalescombobox.SelectedIndex = 0  ' Set default filter option to "This Day"
 
 
-        dbsaleschartcmbbx.Items.AddRange({"This Day", "This Week", "This Month", "This Year"})
-        dbsaleschartcmbbx.SelectedIndex = 0
+
+        hatdogchartcmbbx.Items.AddRange({"This Day", "This Week", "This Month", "This Year"})
+        hatdogchartcmbbx.SelectedIndex = 0
 
         ' Load all sales data by default
         LoadAllSalesData()
@@ -182,8 +192,15 @@ Public Class Dashboard
         cusdgv.ReadOnly = True
         expdgv.ReadOnly = True
         TOreceiptdgv.ReadOnly = True
-        userdgv.ReadOnly = True
 
+
+        hatdogchartcmbbx.Items.Clear()
+        hatdogchartcmbbx.Items.Add("This Day")
+        hatdogchartcmbbx.Items.Add("This Week")
+        hatdogchartcmbbx.Items.Add("This Month")
+        hatdogchartcmbbx.Items.Add("This Year")
+        hatdogchartcmbbx.SelectedIndex = 0
+        LoadHatdogChart()
 
         expunitofmeasurecmbbx.Items.Clear()
         exptranstypecmbbx.Items.Clear()
@@ -213,61 +230,232 @@ Public Class Dashboard
         'dashboard ng pinas
         Me.WindowState = FormWindowState.Maximized
     End Sub
-
-
+    Private Sub hatdogchartcmbbx_SelectedIndexChanged(sender As Object, e As EventArgs) Handles hatdogchartcmbbx.SelectedIndexChanged
+        LoadHatdogChart()
+    End Sub
     Private Sub dbsaleschartcmbbx_SelectedIndexChanged(sender As Object, e As EventArgs)
         LoadSalesChart()
+    End Sub
+    Private Sub LoadHatdogChart()
+        Try
+            ' Clear previous data
+            hatdogchart.Series.Clear()
+            hatdogchart.Titles.Clear()
+            hatdogchart.ChartAreas(0).AxisX.Title = ""
+            hatdogchart.ChartAreas(0).AxisY.Title = "Number of Sales"
+
+            ' Create new series
+            Dim series As New DataVisualization.Charting.Series("Total Sales")
+            series.ChartType = DataVisualization.Charting.SeriesChartType.Column
+            series.Color = Color.OrangeRed
+            series.IsValueShownAsLabel = True
+            hatdogchart.Series.Add(series)
+
+            ' Get selected filter
+            Dim filter As String = hatdogchartcmbbx.SelectedItem.ToString()
+            Dim dateCondition As String = ""
+            Dim groupByClause As String = "DATE(DateOrdered)"
+            Dim dateFormat As String = "MM-dd"
+            Dim chartTitle As String = ""
+
+            Select Case filter
+                Case "This Day"
+                    dateCondition = "WHERE DATE(DateOrdered) = CURDATE()"
+                    groupByClause = "HOUR(TimeOrdered)"
+                    dateFormat = "HH:00"
+                    chartTitle = "Sales Count by Hour (Today)"
+                    hatdogchart.ChartAreas(0).AxisX.Title = "Hour"
+                    series.ChartType = DataVisualization.Charting.SeriesChartType.Column
+
+                Case "This Week"
+                    dateCondition = "WHERE YEARWEEK(DateOrdered, 1) = YEARWEEK(CURDATE(), 1)"
+                    groupByClause = "DATE(DateOrdered)"
+                    dateFormat = "ddd (MM-dd)"
+                    chartTitle = "Sales Count by Day (This Week)"
+                    hatdogchart.ChartAreas(0).AxisX.Title = "Day"
+
+                Case "This Month"
+                    dateCondition = "WHERE MONTH(DateOrdered) = MONTH(CURDATE()) AND YEAR(DateOrdered) = YEAR(CURDATE())"
+                    groupByClause = "DATE(DateOrdered)"
+                    dateFormat = "dd MMM"
+                    chartTitle = "Sales Count by Day (This Month)"
+                    hatdogchart.ChartAreas(0).AxisX.Title = "Date"
+
+                Case "This Year"
+                    dateCondition = "WHERE YEAR(DateOrdered) = YEAR(CURDATE())"
+                    groupByClause = "MONTH(DateOrdered)"
+                    dateFormat = "MMM"
+                    chartTitle = "Sales Count by Month (This Year)"
+                    hatdogchart.ChartAreas(0).AxisX.Title = "Month"
+            End Select
+
+            ' Build query: count sales grouped by time period
+            Dim query As String = $"
+            SELECT 
+                {groupByClause} AS TimePeriod,
+                COUNT(*) AS SalesCount
+            FROM sales
+            {dateCondition}
+            GROUP BY TimePeriod
+            ORDER BY TimePeriod ASC"
+
+            ' Execute query
+            Using connection As New MySqlConnection(conn.ConnectionString)
+                connection.Open()
+                Dim cmd As New MySqlCommand(query, connection)
+                Dim reader As MySqlDataReader = cmd.ExecuteReader()
+
+                ' Add chart title
+                hatdogchart.Titles.Add(New DataVisualization.Charting.Title(chartTitle,
+              DataVisualization.Charting.Docking.Top,
+              New Font("Arial", 12, FontStyle.Bold),
+              Color.Black))
+
+                While reader.Read()
+                    Dim timePeriod As String = ""
+                    Dim count As Integer = Convert.ToInt32(reader("SalesCount"))
+
+                    ' Format x-axis label based on filter
+                    Select Case filter
+                        Case "This Day"
+                            timePeriod = $"{reader("TimePeriod")}:00"
+                        Case "This Week", "This Month"
+                            timePeriod = Convert.ToDateTime(reader("TimePeriod")).ToString(dateFormat)
+                        Case "This Year"
+                            timePeriod = New DateTime(DateTime.Now.Year, Convert.ToInt32(reader("TimePeriod")), 1).ToString(dateFormat)
+                    End Select
+
+                    ' Add data point
+                    series.Points.AddXY(timePeriod, count)
+                End While
+            End Using
+
+            ' Format chart axis
+            hatdogchart.ChartAreas(0).AxisX.Interval = 1
+            hatdogchart.ChartAreas(0).AxisX.LabelStyle.Angle = -45
+            hatdogchart.ChartAreas(0).RecalculateAxesScale()
+
+        Catch ex As Exception
+            MessageBox.Show("Error loading hatdog chart data: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
 
     Private Sub LoadSalesChart()
         Try
-            Dim filter As String = dbsaleschartcmbbx.SelectedItem.ToString()
-            Dim dateCondition As String = ""
+            ' Ensure ChartArea exists
+            If hatdogchart.ChartAreas.Count = 0 Then
+                hatdogchart.ChartAreas.Add(New DataVisualization.Charting.ChartArea())
+            End If
 
+            ' Clear previous data
+            hatdogchart.Series.Clear()
+            hatdogchart.Titles.Clear()
+            hatdogchart.ChartAreas(0).AxisX.Title = ""
+            hatdogchart.ChartAreas(0).AxisY.Title = "Amount (₱)"
+
+            ' Add series
+            Dim series As New DataVisualization.Charting.Series("Sales") With {
+            .ChartType = DataVisualization.Charting.SeriesChartType.Column,
+            .Color = Color.SteelBlue,
+            .IsValueShownAsLabel = True,
+            .LabelFormat = "₱#,##0"
+        }
+            hatdogchart.Series.Add(series)
+
+            ' Check ComboBox selection
+            If hatdogchartcmbbx.SelectedItem Is Nothing Then
+                MessageBox.Show("Please select a filter from the dropdown.")
+                Return
+            End If
+            Dim filter As String = hatdogchartcmbbx.SelectedItem.ToString()
+            Dim dateCondition As String = ""
+            Dim groupByClause As String = "DATE(DateOrdered)"
+            Dim dateFormat As String = "MM-dd"
+            Dim chartTitle As String = ""
+
+            ' Set query parameters based on filter
             Select Case filter
                 Case "This Day"
                     dateCondition = "WHERE DATE(DateOrdered) = CURDATE()"
+                    groupByClause = "HOUR(TimeOrdered)"
+                    dateFormat = "HH:00"
+                    chartTitle = "Today's Hourly Sales"
+                    hatdogchart.ChartAreas(0).AxisX.Title = "Hour"
+                    series.ChartType = DataVisualization.Charting.SeriesChartType.Line
+
                 Case "This Week"
                     dateCondition = "WHERE YEARWEEK(DateOrdered, 1) = YEARWEEK(CURDATE(), 1)"
+                    groupByClause = "DATE(DateOrdered)"
+                    dateFormat = "ddd (MM-dd)"
+                    chartTitle = "This Week's Daily Sales"
+                    hatdogchart.ChartAreas(0).AxisX.Title = "Day"
+
                 Case "This Month"
                     dateCondition = "WHERE MONTH(DateOrdered) = MONTH(CURDATE()) AND YEAR(DateOrdered) = YEAR(CURDATE())"
+                    groupByClause = "DATE(DateOrdered)"
+                    dateFormat = "dd MMM"
+                    chartTitle = "This Month's Daily Sales"
+                    hatdogchart.ChartAreas(0).AxisX.Title = "Date"
+
                 Case "This Year"
                     dateCondition = "WHERE YEAR(DateOrdered) = YEAR(CURDATE())"
+                    groupByClause = "MONTH(DateOrdered)"
+                    dateFormat = "MMM"
+                    chartTitle = "This Year's Monthly Sales"
+                    hatdogchart.ChartAreas(0).AxisX.Title = "Month"
             End Select
 
-            Dim query As String = "
-            SELECT 
-                DATE(DateOrdered) AS SaleDate,
-                SUM(NetAmount) AS TotalSales
-            FROM sales
-            " & dateCondition & "
-            GROUP BY SaleDate
-            ORDER BY SaleDate ASC
-        "
+            Dim connStr As String = "your_connection_string_here"
+            Dim query As String = $"
+           SELECT 
+               {groupByClause} AS TimePeriod,
+               SUM(NetAmount) AS TotalSales
+           FROM sales
+           {dateCondition}
+           GROUP BY TimePeriod
+           ORDER BY TimePeriod ASC"
 
-            Using connection As New MySqlConnection(conn.ConnectionString)
+            Using connection As New MySqlConnection(connStr)
                 connection.Open()
+                Using cmd As New MySqlCommand(query, connection)
+                    Using reader As MySqlDataReader = cmd.ExecuteReader()
+                        ' Add chart title
+                        hatdogchart.Titles.Add(New DataVisualization.Charting.Title(chartTitle,
+                        DataVisualization.Charting.Docking.Top,
+                        New Font("Arial", 12, FontStyle.Bold),
+                        Color.Black))
 
-                Dim cmd As New MySqlCommand(query, connection)
-                Dim reader As MySqlDataReader = cmd.ExecuteReader()
+                        While reader.Read()
+                            Dim timePeriod As String = ""
+                            Dim total As Decimal = Convert.ToDecimal(reader("TotalSales"))
 
-                ' Clear previous data
-                dbsaleschart.Series.Clear()
-                dbsaleschart.Series.Add("Sales")
-                dbsaleschart.Series("Sales").ChartType = DataVisualization.Charting.SeriesChartType.Column ' Or Line
+                            Select Case filter
+                                Case "This Day"
+                                    timePeriod = $"{Convert.ToInt32(reader("TimePeriod"))}:00"
+                                Case "This Week", "This Month"
+                                    timePeriod = Convert.ToDateTime(reader("TimePeriod")).ToString(dateFormat)
+                                Case "This Year"
+                                    timePeriod = New DateTime(DateTime.Now.Year, Convert.ToInt32(reader("TimePeriod")), 1).ToString(dateFormat)
+                            End Select
 
-                While reader.Read()
-                    Dim dateVal As Date = Convert.ToDateTime(reader("SaleDate"))
-                    Dim total As Decimal = Convert.ToDecimal(reader("TotalSales"))
-
-                    dbsaleschart.Series("Sales").Points.AddXY(dateVal.ToString("MM-dd"), total)
-                End While
+                            series.Points.AddXY(timePeriod, total)
+                        End While
+                    End Using
+                End Using
             End Using
+
+            ' Adjust chart appearance
+            hatdogchart.ChartAreas(0).AxisX.Interval = 1
+            hatdogchart.ChartAreas(0).AxisX.LabelStyle.Angle = -45
+            hatdogchart.ChartAreas(0).AxisY.LabelStyle.Format = "₱#,##0"
+            hatdogchart.ChartAreas(0).RecalculateAxesScale()
+
         Catch ex As Exception
-            MessageBox.Show("Error loading chart data: " & ex.Message)
+            MessageBox.Show("Error loading chart data: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
+
 
     ' In Dashboard form
     Public Sub UpdateUserLabel(firstName As String, lastName As String)
@@ -286,9 +474,7 @@ Public Class Dashboard
     End Sub
 
     ' This method will be triggered when the ComboBox selection changes
-    Private Sub dbsalescombobox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles dbsalescombobox.SelectedIndexChanged
-        FilterSalesData() ' Filter data based on ComboBox selection
-    End Sub
+
 
     Private Sub LoadAllSalesData()
         Dim query As String = "
@@ -329,53 +515,6 @@ Public Class Dashboard
 
     End Sub
 
-    Private Sub FilterSalesData()
-        ' Get the selected filter value
-        Dim filter As String = dbsalescombobox.SelectedItem.ToString()
-        Dim dateCondition As String = ""
-
-        ' Determine the query condition based on the selected filter
-        Select Case filter
-            Case "This Day"
-                dateCondition = "WHERE DATE(DateOrdered) = CURDATE()"
-            Case "This Week"
-                dateCondition = "WHERE YEARWEEK(DateOrdered, 1) = YEARWEEK(CURDATE(), 1)"
-            Case "This Month"
-                dateCondition = "WHERE MONTH(DateOrdered) = MONTH(CURDATE()) AND YEAR(DateOrdered) = YEAR(CURDATE())"
-            Case "This Year"
-                dateCondition = "WHERE YEAR(DateOrdered) = YEAR(CURDATE())"
-            Case Else
-                ' If filter is "Cancel" or any custom filter, load all data
-                dateCondition = ""
-        End Select
-
-        ' Create the query with the selected filter
-        Dim query As String = "
-        SELECT 
-            SID AS 'SaleID', 
-            CID AS 'CustomerID',
-            ReceiptNumber AS 'Receipt#',
-            TimeOrdered AS 'Time',
-            DateOrdered AS 'Date',
-            ItemsOrdered AS 'Items',
-            QTY AS 'Quantity',
-            SubTotal AS 'Subtotal',
-            DiscountAmount AS 'Discount',
-            NetAmount AS 'Total',
-            PaymentMethod AS 'Payment Method',
-            TransactionType AS 'Transaction Type',
-            OrderStatus AS 'Order Status',
-            RefundStatus AS 'Refund',
-            DateRecorded AS 'Date Recorded',
-            ProcessedBy AS 'Processed By',
-            Notes AS 'Notes'
-        FROM sales " & dateCondition & "
-        ORDER BY DateRecorded DESC
-        LIMIT 10"
-
-        ' Load the filtered data into the DataGridView
-        LoadToDGV(query, dbrecentsalestable)
-    End Sub
 
     ' Method to update time and date
 
@@ -421,20 +560,7 @@ Public Class Dashboard
             MessageBox.Show("Error loading sales count: " & ex.Message)
         End Try
     End Sub
-    Private Sub LoadTotalEmployees()
-        Try
-            Using connection As New MySqlConnection(strConnection)
-                connection.Open()
 
-                Dim cmd As New MySqlCommand("SELECT COUNT(*) FROM employee", connection)
-                Dim count As Integer = Convert.ToInt32(cmd.ExecuteScalar())
-
-                totalemployeesplcholder.Text = count.ToString()
-            End Using
-        Catch ex As Exception
-            MessageBox.Show("Error loading employee count: " & ex.Message)
-        End Try
-    End Sub
 
 
     Private Sub LoadTotalExpenses()
@@ -2394,13 +2520,14 @@ ORDER BY DateOrdered DESC"
             Dim cid As Integer
             Using conn As New MySqlConnection(strConnection)
                 conn.Open()
-                Dim custCmd As New MySqlCommand("INSERT INTO customer 
-                (FirstName, LastName, PhoneNumber, Address, TableNumber, ItemsOrdered, QTY, TransactionType, 
-                OrderStatus, TimeOrdered, DateOrdered, SubTotal, DiscountAmount, NetAmount, PaymentMethod, 
-                ReceiptNumber, RefundStatus, DateRecorded, ProcessedBy, Notes) 
-                VALUES 
-                (@fn, @ln, @ph, @addr, @tbl, @items, @qty, @ttype, 'Pending', NOW(), NOW(), @sub, @disc, @net, 
-                @pmethod, @rnum, 'No', NOW(), @user, '')", conn)
+                Dim custCmd As New MySqlCommand("
+            INSERT INTO customer 
+            (FirstName, LastName, PhoneNumber, Address, TableNumber, ItemsOrdered, QTY, TransactionType, 
+            OrderStatus, TimeOrdered, DateOrdered, SubTotal, DiscountAmount, NetAmount, PaymentMethod, 
+            ReceiptNumber, RefundStatus, DateRecorded, ProcessedBy, Notes) 
+            VALUES 
+            (@fn, @ln, @ph, @addr, @tbl, @items, @qty, @ttype, 'Pending', NOW(), NOW(), @sub, @disc, @net, 
+            @pmethod, @rnum, 'No', NOW(), @user, '')", conn)
 
                 With custCmd.Parameters
                     .AddWithValue("@fn", If(String.IsNullOrWhiteSpace(TOfirstnametxtbox.Text), DBNull.Value, TOfirstnametxtbox.Text))
@@ -2426,13 +2553,14 @@ ORDER BY DateOrdered DESC"
             ' Insert into Sales Table
             Using conn As New MySqlConnection(strConnection)
                 conn.Open()
-                Dim salesCmd As New MySqlCommand("INSERT INTO sales 
-                (CID, ReceiptNumber, TimeOrdered, DateOrdered, ItemsOrdered, QTY, SubTotal, 
-                DiscountAmount, NetAmount, PaymentMethod, TransactionType, OrderStatus, RefundStatus, 
-                DateRecorded, ProcessedBy, Notes) 
-                VALUES 
-                (@cid, @rnum, NOW(), NOW(), @items, @qty, @sub, @disc, @net, @pmethod, 
-                @ttype, 'Pending', 'No', NOW(), @user, '')", conn)
+                Dim salesCmd As New MySqlCommand("
+            INSERT INTO sales 
+            (CID, ReceiptNumber, TimeOrdered, DateOrdered, ItemsOrdered, QTY, SubTotal, 
+            DiscountAmount, NetAmount, PaymentMethod, TransactionType, OrderStatus, RefundStatus, 
+            DateRecorded, ProcessedBy, Notes) 
+            VALUES 
+            (@cid, @rnum, NOW(), NOW(), @items, @qty, @sub, @disc, @net, @pmethod, 
+            @ttype, 'Pending', 'No', NOW(), @user, '')", conn)
 
                 With salesCmd.Parameters
                     .AddWithValue("@cid", cid)
@@ -2450,6 +2578,28 @@ ORDER BY DateOrdered DESC"
                 salesCmd.ExecuteNonQuery()
             End Using
 
+            ' Insert into TEMP table for pending items
+            For Each row As DataGridViewRow In TOreceiptdgv.Rows
+                If Not row.IsNewRow Then
+                    Using conn As New MySqlConnection(strConnection)
+                        conn.Open()
+                        Dim tempCmd As New MySqlCommand("
+                    INSERT INTO temp_order_items 
+                    (CID, ItemName, Quantity, TableNumber, TransactionType, OrderStatus, TimeRecorded, DateRecorded) 
+                    VALUES 
+                    (@cid, @item, @qty, @table, @ttype, 'Pending', NOW(), NOW())", conn)
+
+                        tempCmd.Parameters.AddWithValue("@cid", cid)
+                        tempCmd.Parameters.AddWithValue("@item", row.Cells("item_name").Value.ToString())
+                        tempCmd.Parameters.AddWithValue("@qty", Convert.ToInt32(row.Cells("qty").Value))
+                        tempCmd.Parameters.AddWithValue("@table", tableNumber)
+                        tempCmd.Parameters.AddWithValue("@ttype", transactionType)
+
+                        tempCmd.ExecuteNonQuery()
+                    End Using
+                End If
+            Next
+
             ' Update Inventory
             For Each row As DataGridViewRow In TOreceiptdgv.Rows
                 If Not row.IsNewRow Then
@@ -2458,9 +2608,11 @@ ORDER BY DateOrdered DESC"
 
                     Using conn As New MySqlConnection(strConnection)
                         conn.Open()
-                        Dim updateCmd As New MySqlCommand("UPDATE item_breakdown 
-                        SET TotalQuantityAvailable = TotalQuantityAvailable - @qty 
-                        WHERE ItemName = @name", conn)
+                        Dim updateCmd As New MySqlCommand("
+                    UPDATE item_breakdown 
+                    SET TotalQuantityAvailable = TotalQuantityAvailable - @qty 
+                    WHERE ItemName = @name", conn)
+
                         updateCmd.Parameters.AddWithValue("@qty", qtyToSubtract)
                         updateCmd.Parameters.AddWithValue("@name", itemName)
                         updateCmd.ExecuteNonQuery()
@@ -2485,28 +2637,50 @@ ORDER BY DateOrdered DESC"
             TOSubtotalplcholderlbl.Text = "0.00"
             TOreceiptdgv.Rows.Clear()
 
-            ' Generate PDF receipt
+            ' Generate PDF
             MessageBox.Show("Generating PDF receipt...", "Receipt", MessageBoxButtons.OK, MessageBoxIcon.Information)
-
             Try
                 Dim downloadsPath As String = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) & "\Downloads\"
                 Dim pdfFileName As String = $"Receipt_{receiptNumber}_{DateTime.Now:yyyyMMddHHmmss}.pdf"
                 Dim fullPath As String = Path.Combine(downloadsPath, pdfFileName)
 
+                ' Get the temp order items data
+                Dim tempOrderItems As New List(Of TempOrderItem)
+                Using conn As New MySqlConnection(strConnection)
+                    conn.Open()
+                    Dim cmd As New MySqlCommand("SELECT * FROM temp_order_items WHERE CID = @cid", conn)
+                    cmd.Parameters.AddWithValue("@cid", cid)
+
+                    Using reader As MySqlDataReader = cmd.ExecuteReader()
+                        While reader.Read()
+                            tempOrderItems.Add(New TempOrderItem() With {
+                            .TempID = reader("TempID").ToString(),
+                            .cid = reader("CID").ToString(),
+                            .ItemName = reader("ItemName").ToString(),
+                            .Quantity = reader("Quantity").ToString(),
+                            .tableNumber = reader("TableNumber").ToString(),
+                            .transactionType = reader("TransactionType").ToString(),
+                            .OrderStatus = reader("OrderStatus").ToString(),
+                            .TimeRecorded = reader("TimeRecorded").ToString(),
+                            .DateRecorded = reader("DateRecorded").ToString()
+                        })
+                        End While
+                    End Using
+                End Using
+
                 Dim printDoc As New Printing.PrintDocument()
                 AddHandler printDoc.PrintPage, Sub(senderDoc, eDoc)
                                                    PrintReceiptPage(senderDoc, eDoc, receiptNumber, tableNumber,
-                                                   TOfirstnametxtbox.Text, TOlastnametxtbox.Text,
-                                                   TOphonenumtxtbox.Text, TOaddresstxtbox.Text,
-                                                   transactionType, TOpaymentmethodcmbbx.Text,
-                                                   subtotal, discount, netAmount, moneyGiven, changeDue,
-                                                   TOreceiptdgv)
+                                TOfirstnametxtbox.Text, TOlastnametxtbox.Text,
+                                TOphonenumtxtbox.Text, TOaddresstxtbox.Text,
+                                transactionType, TOpaymentmethodcmbbx.Text,
+                                subtotal, discount, netAmount, moneyGiven, changeDue,
+                                TOreceiptdgv, tempOrderItems)
                                                End Sub
 
                 printDoc.PrinterSettings.PrinterName = "Microsoft Print to PDF"
                 printDoc.PrinterSettings.PrintToFile = True
                 printDoc.PrinterSettings.PrintFileName = fullPath
-
                 printDoc.Print()
 
                 MessageBox.Show($"Receipt saved as PDF:{vbCrLf}{fullPath}", "Receipt Printed", MessageBoxButtons.OK, MessageBoxIcon.Information)
@@ -2518,128 +2692,178 @@ ORDER BY DateOrdered DESC"
             MessageBox.Show("Error: " & ex.Message)
             Exit Sub
         End Try
-
-
-
     End Sub
     Private Sub LoadPendingOrders()
         servingstbllayout.Controls.Clear()
 
         Using conn As New MySqlConnection(strConnection)
+            Try
+                conn.Open()
+
+                Dim query As String = "
+                SELECT 
+                     CID, 
+                     TableNumber, 
+                     GROUP_CONCAT(ItemName ORDER BY TempID SEPARATOR '|') AS ItemsOrdered,
+                     GROUP_CONCAT(Quantity ORDER BY TempID SEPARATOR '|') AS QTY,
+                     MAX(TransactionType) AS TransactionType
+                 FROM temp_order_items
+                 WHERE OrderStatus = 'Pending'
+                 GROUP BY CID, TableNumber
+            "
+
+                Using cmd As New MySqlCommand(query, conn)
+                    Using reader As MySqlDataReader = cmd.ExecuteReader()
+                        While reader.Read()
+                            Dim cardPanel As New Panel()
+                            cardPanel.Size = New Size(300, 140)
+                            cardPanel.BackColor = Color.LightYellow
+                            cardPanel.BorderStyle = BorderStyle.FixedSingle
+                            cardPanel.Margin = New Padding(10)
+
+                            ' Table number
+                            Dim lblTable As New Label()
+                            lblTable.Text = "Table #: " & reader("TableNumber").ToString()
+                            lblTable.Font = New Font("Segoe UI", 10, FontStyle.Bold)
+                            lblTable.Location = New Point(10, 10)
+                            lblTable.AutoSize = True
+
+                            ' Order details
+                            Dim txtDetails As New TextBox()
+                            txtDetails.Multiline = True
+                            txtDetails.ReadOnly = True
+                            txtDetails.Location = New Point(10, 35)
+                            txtDetails.Size = New Size(260, 60)
+                            txtDetails.BackColor = Color.LightYellow
+                            txtDetails.BorderStyle = BorderStyle.None
+                            txtDetails.ScrollBars = ScrollBars.Vertical
+                            txtDetails.Font = New Font("Segoe UI", 9)
+                            txtDetails.TabStop = False  ' Avoid focus on tab
+
+                            ' Items + quantities (split by '|')
+                            Dim items As String() = reader("ItemsOrdered").ToString().Split("|"c)
+                            Dim qtys As String() = reader("QTY").ToString().Split("|"c)
+
+                            txtDetails.Text = ""
+                            For i As Integer = 0 To Math.Min(items.Length - 1, qtys.Length - 1)
+                                Dim itemName As String = items(i).Trim()
+                                Dim qty As String = qtys(i).Trim()
+                                txtDetails.Text &= itemName.PadRight(20) & "x" & qty & Environment.NewLine
+                            Next
+
+                            ' Transaction type
+                            Dim lblType As New Label()
+                            lblType.Text = "Type: " & reader("TransactionType").ToString()
+                            lblType.Location = New Point(10, 100)
+                            lblType.AutoSize = True
+                            lblType.Font = New Font("Segoe UI", 9, FontStyle.Italic)
+
+                            ' Buttons
+                            Dim btnServe As New Button()
+                            btnServe.Text = "Serve"
+                            btnServe.Size = New Size(75, 25)
+                            btnServe.Location = New Point(130, 100)
+
+                            Dim btnCancel As New Button()
+                            btnCancel.Text = "Cancel"
+                            btnCancel.Size = New Size(75, 25)
+                            btnCancel.Location = New Point(210, 100)
+
+                            Dim cid As Integer = Convert.ToInt32(reader("CID"))
+
+                            ' Serve handler
+                            AddHandler btnServe.Click, Sub()
+                                                           Try
+                                                               MarkOrderStatus(cid, "Completed")
+                                                               LoadPendingOrders()
+                                                           Catch ex As Exception
+                                                               MessageBox.Show("Error serving order: " & ex.Message)
+                                                           End Try
+                                                       End Sub
+
+                            AddHandler btnCancel.Click, Sub()
+                                                            Dim result = MessageBox.Show("Are you sure you want to cancel this order?", "Cancel Order", MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
+                                                            If result = DialogResult.Yes Then
+                                                                Try
+                                                                    MarkOrderStatus(cid, "Cancelled")
+                                                                    LoadPendingOrders()
+                                                                Catch ex As Exception
+                                                                    MessageBox.Show("Error cancelling order: " & ex.Message)
+                                                                End Try
+                                                            End If
+                                                        End Sub
+
+
+                            ' Add controls to panel
+                            cardPanel.Controls.Add(lblTable)
+                            cardPanel.Controls.Add(txtDetails)
+                            cardPanel.Controls.Add(lblType)
+                            cardPanel.Controls.Add(btnServe)
+                            cardPanel.Controls.Add(btnCancel)
+
+                            ' Add panel to layout (assuming servingstbllayout is a FlowLayoutPanel)
+                            servingstbllayout.Controls.Add(cardPanel)
+                        End While
+                    End Using
+                End Using
+            Catch ex As Exception
+                MessageBox.Show("Failed to load pending orders: " & ex.Message)
+            End Try
+        End Using
+    End Sub
+
+    Private Sub MarkOrderStatus(cid As Integer, status As String)
+        Using conn As New MySqlConnection(strConnection)
             conn.Open()
-            Dim cmd As New MySqlCommand("
-                SELECT s.CID, c.TableNumber, s.ItemsOrdered, s.QTY, s.TransactionType 
-                FROM sales s 
-                INNER JOIN customer c ON s.CID = c.CID
-                WHERE s.OrderStatus = 'Pending'
-            ", conn)
+            Using transaction = conn.BeginTransaction()
+                Try
+                    Dim dbStatus As String = If(status = "Completed", "Completed", "Cancelled")
 
-            Using reader As MySqlDataReader = cmd.ExecuteReader()
-                While reader.Read()
-                    Dim cardPanel As New Panel()
-                    cardPanel.Size = New Size(260, 140)
-                    cardPanel.BackColor = Color.LightYellow
-                    cardPanel.BorderStyle = BorderStyle.FixedSingle
-                    cardPanel.Margin = New Padding(10)
+                    ' Update customer table
+                    Using cmdCust As New MySqlCommand("UPDATE customer SET OrderStatus = @status WHERE CID = @cid", conn, transaction)
+                        cmdCust.Parameters.AddWithValue("@status", dbStatus)
+                        cmdCust.Parameters.AddWithValue("@cid", cid)
+                        cmdCust.ExecuteNonQuery()
+                    End Using
 
-                    ' Table number
-                    Dim lblTable As New Label()
-                    lblTable.Text = "Table #: " & reader("TableNumber").ToString()
-                    lblTable.Font = New Font("Segoe UI", 10, FontStyle.Bold)
-                    lblTable.Location = New Point(10, 10)
-                    lblTable.AutoSize = True
+                    ' Update sales table
+                    Using cmdSales As New MySqlCommand("UPDATE sales SET OrderStatus = @status WHERE CID = @cid", conn, transaction)
+                        cmdSales.Parameters.AddWithValue("@status", dbStatus)
+                        cmdSales.Parameters.AddWithValue("@cid", cid)
+                        cmdSales.ExecuteNonQuery()
+                    End Using
 
-                    ' Order details
-                    Dim txtDetails As New TextBox()
-                    txtDetails.Multiline = True
-                    txtDetails.ReadOnly = True
-                    txtDetails.Location = New Point(10, 35)
-                    txtDetails.Size = New Size(240, 60)
-                    txtDetails.BackColor = Color.LightYellow
-                    txtDetails.BorderStyle = BorderStyle.None
+                    ' Delete from temp_order_items
+                    Using cmdDelete As New MySqlCommand("DELETE FROM temp_order_items WHERE CID = @cid", conn, transaction)
+                        cmdDelete.Parameters.AddWithValue("@cid", cid)
+                        cmdDelete.ExecuteNonQuery()
+                    End Using
 
-                    ' Items + quantities
-                    Dim items As String() = reader("ItemsOrdered").ToString().Split(","c)
-                    Dim qtys As String() = reader("QTY").ToString().Split(","c)
-                    For i As Integer = 0 To Math.Min(items.Length - 1, qtys.Length - 1)
-                        txtDetails.Text &= items(i).Trim() & " x" & qtys(i).Trim() & Environment.NewLine
-                    Next
-
-                    ' Transaction type
-                    Dim lblType As New Label()
-                    lblType.Text = "Type: " & reader("TransactionType").ToString()
-                    lblType.Location = New Point(10, 100)
-                    lblType.AutoSize = True
-
-                    ' Buttons
-                    Dim btnServe As New Button()
-                    btnServe.Text = "Serve"
-                    btnServe.Size = New Size(75, 25)
-                    btnServe.Location = New Point(130, 100)
-
-                    Dim btnCancel As New Button()
-                    btnCancel.Text = "Cancel"
-                    btnCancel.Size = New Size(75, 25)
-                    btnCancel.Location = New Point(210, 100)
-
-                    Dim cid As Integer = Convert.ToInt32(reader("CID"))
-
-                    ' Serve handler
-                    AddHandler btnServe.Click, Sub()
-                                                   MarkOrderStatus(cid, "Served")
-                                                   LoadPendingOrders()
-                                               End Sub
-
-                    ' Cancel handler
-                    AddHandler btnCancel.Click, Sub()
-                                                    Dim result = MessageBox.Show("Are you sure you want to cancel this order?", "Cancel Order", MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
-                                                    If result = DialogResult.Yes Then
-                                                        MarkOrderStatus(cid, "Cancelled")
-                                                        LoadPendingOrders()
-                                                    End If
-                                                End Sub
-
-                    ' Add to panel
-                    cardPanel.Controls.Add(lblTable)
-                    cardPanel.Controls.Add(txtDetails)
-                    cardPanel.Controls.Add(lblType)
-                    cardPanel.Controls.Add(btnServe)
-                    cardPanel.Controls.Add(btnCancel)
-
-                    ' Add panel to flow layout
-                    servingstbllayout.Controls.Add(cardPanel)
-                End While
+                    transaction.Commit()
+                Catch ex As Exception
+                    transaction.Rollback()
+                    Throw
+                End Try
             End Using
         End Using
     End Sub
 
 
-    Private Sub MarkOrderStatus(cid As Integer, status As String)
-        Using conn As New MySqlConnection(strConnection)
-            conn.Open()
-            Dim cmd As New MySqlCommand("UPDATE customer SET OrderStatus = @status WHERE CID = @cid", conn)
-            If status = "Served" Then
-                ' Actually store "Completed" in the database
-                cmd.Parameters.AddWithValue("@status", "Completed")
-            Else
-                cmd.Parameters.AddWithValue("@status", "Cancelled")
-            End If
-            cmd.Parameters.AddWithValue("@cid", cid)
-            cmd.ExecuteNonQuery()
-        End Using
-    End Sub
+
+
 
 
 
 
     Private Sub PrintReceiptPage(sender As Object, e As Printing.PrintPageEventArgs,
-                           receiptNumber As String, tableNumber As String,
-                           firstName As String, lastName As String,
-                           phoneNumber As String, address As String,
-                           transactionType As String, paymentMethod As String,
-                           subtotal As Decimal, discount As Decimal,
-                           netAmount As Decimal, moneyGiven As Decimal,
-                           changeDue As Decimal, dgv As DataGridView)
+                       receiptNumber As String, tableNumber As String,
+                       firstName As String, lastName As String,
+                       phoneNumber As String, address As String,
+                       transactionType As String, paymentMethod As String,
+                       subtotal As Decimal, discount As Decimal,
+                       netAmount As Decimal, moneyGiven As Decimal,
+                       changeDue As Decimal, dgv As DataGridView,
+                       tempOrderItems As List(Of TempOrderItem))
         ' Fonts
         Dim titleFont As New Font("Arial", 18, FontStyle.Bold)
         Dim headerFont As New Font("Arial", 12, FontStyle.Bold)
@@ -2652,11 +2876,11 @@ ORDER BY DateOrdered DESC"
         Dim yPos As Integer = topMargin
 
         ' Business header
-        e.Graphics.DrawString("YOUR BUSINESS NAME", titleFont, Brushes.Black, leftMargin, yPos)
+        e.Graphics.DrawString("Bamboo Grill Unlimited Rice", titleFont, Brushes.Black, leftMargin, yPos)
         yPos += 30
-        e.Graphics.DrawString("Business Address", regularFont, Brushes.Black, leftMargin, yPos)
+        e.Graphics.DrawString("Purok V Bagasbas Road, Brgy. Borabod, Daet, Camarines Norte", regularFont, Brushes.Black, leftMargin, yPos)
         yPos += 20
-        e.Graphics.DrawString("Contact Information", regularFont, Brushes.Black, leftMargin, yPos)
+        e.Graphics.DrawString("09915638939", regularFont, Brushes.Black, leftMargin, yPos)
         yPos += 30
 
         ' Receipt header
@@ -2696,24 +2920,12 @@ ORDER BY DateOrdered DESC"
         e.Graphics.DrawLine(Pens.Black, leftMargin, yPos, leftMargin + 350, yPos)
         yPos += 10
 
-        ' Items list
-        For Each row As DataGridViewRow In dgv.Rows
-            If Not row.IsNewRow Then
-                Dim itemName As String = row.Cells("item_name").Value.ToString()
-                Dim quantity As String = row.Cells("qty").Value.ToString()
-                Dim price As Decimal = Decimal.Parse(row.Cells("price").Value.ToString())
-                Dim total As Decimal = quantity * price
-
-                ' Wrap text if needed
-                Dim itemNameRect As New RectangleF(leftMargin, yPos, 180, 40)
-                e.Graphics.DrawString(itemName, regularFont, Brushes.Black, itemNameRect)
-                e.Graphics.DrawString(quantity, regularFont, Brushes.Black, leftMargin + 200, yPos)
-                e.Graphics.DrawString(price.ToString("F2"), regularFont, Brushes.Black, leftMargin + 250, yPos)
-
-                ' Adjust yPos based on text height
-                Dim textHeight As Integer = CInt(e.Graphics.MeasureString(itemName, regularFont, 180).Height)
-                yPos += Math.Max(textHeight, 20)
-            End If
+        ' Items list from temp_order_items
+        For Each item In tempOrderItems
+            e.Graphics.DrawString(item.ItemName, regularFont, Brushes.Black, leftMargin, yPos)
+            e.Graphics.DrawString(item.Quantity, regularFont, Brushes.Black, leftMargin + 200, yPos)
+            ' You might want to add price here if available
+            yPos += 20
         Next
 
         ' Draw line
@@ -2731,7 +2943,7 @@ ORDER BY DateOrdered DESC"
         yPos += 20
 
         e.Graphics.DrawString("Net Total:", headerFont, Brushes.Black, leftMargin + 150, yPos)
-        e.Graphics.DrawString(netAmount.ToString("F2"), regularFont, Brushes.Black, leftMargin + 250, yPos)
+        e.Graphics.DrawString(netAmount.ToString("F2"), regularFont, Brushes.Black, leftMargin + 260, yPos)
         yPos += 20
 
         e.Graphics.DrawString("Payment Method:", headerFont, Brushes.Black, leftMargin + 100, yPos)
@@ -2749,10 +2961,19 @@ ORDER BY DateOrdered DESC"
         ' Footer
         e.Graphics.DrawString("Thank you for your business!", headerFont, Brushes.Black, leftMargin + 50, yPos)
         yPos += 20
-        e.Graphics.DrawString("Processed by: Jennie Adlawan ", smallFont, Brushes.Black, leftMargin, yPos)
+
+        ' Add temp order details section if needed
+        yPos += 30
+        e.Graphics.DrawString("Order Details:", headerFont, Brushes.Black, leftMargin, yPos)
+        yPos += 20
+
+        For Each item In tempOrderItems
+            e.Graphics.DrawString($"TempID: {item.TempID}", smallFont, Brushes.Black, leftMargin, yPos)
+            e.Graphics.DrawString($"Status: {item.OrderStatus}", smallFont, Brushes.Black, leftMargin + 100, yPos)
+            e.Graphics.DrawString($"Recorded: {item.DateRecorded} {item.TimeRecorded}", smallFont, Brushes.Black, leftMargin + 200, yPos)
+            yPos += 15
+        Next
     End Sub
-
-
 
     Private Function GenerateNextReceiptNumber() As String
         Try
@@ -3474,7 +3695,7 @@ ORDER BY DateOrdered DESC"
             End If
         End Try
     End Sub
-    Private Sub deleteuserbtn_Click(sender As Object, e As EventArgs) Handles deleteuserbtn.Click
+    Private Sub deleteuserbtn_Click(sender As Object, e As EventArgs)
         If userdgv.SelectedRows.Count = 0 Then
             MessageBox.Show("Please select a user to delete.")
             Return
@@ -3513,7 +3734,115 @@ ORDER BY DateOrdered DESC"
             End If
         End Try
     End Sub
+    Private Sub BulkInsertBtn_Click(sender As Object, e As EventArgs) Handles generatebtn.Click
+        Dim fakeFirstNames() As String = {"John", "Jane", "Alex", "Maria", "Mark", "Liam", "Ella", "Noah", "Emma"}
+        Dim fakeLastNames() As String = {"Smith", "Doe", "Johnson", "Garcia", "Lee", "Brown", "Davis", "Miller", "Wilson"}
+        Dim fakeItems() As String = {"Inasal", "Softdrinks", "Chimken", "Manok", "Baboy", "Mangga", "Pasta", "Sandwich"}
+        Dim fakeTransactionTypes() As String = {"Dine-In", "Take-Out"}
+        Dim fakePaymentMethods() As String = {"Cash", "GCash"}
 
+        Dim rand As New Random()
+        Dim numberOfRecords As Integer = 5000
+
+        Try
+            Using conn As New MySqlConnection(strConnection)
+                conn.Open()
+
+                For i As Integer = 1 To numberOfRecords
+                    ' === Generate Customer Details ===
+                    Dim fname As String = fakeFirstNames(rand.Next(fakeFirstNames.Length))
+                    Dim lname As String = fakeLastNames(rand.Next(fakeLastNames.Length))
+                    Dim phone As String = "09" & rand.Next(100000000, 999999999).ToString()
+                    Dim addr As String = "Street " & rand.Next(1, 100).ToString()
+                    Dim tbl As String = rand.Next(1, 20).ToString()
+                    Dim transactionType As String = fakeTransactionTypes(rand.Next(fakeTransactionTypes.Length))
+                    Dim paymentMethod As String = fakePaymentMethods(rand.Next(fakePaymentMethods.Length))
+                    Dim receiptNumber As String = "R" & DateTime.Now.ToString("yyyyMMddHHmmssfff") & rand.Next(100, 999).ToString()
+
+                    ' === Generate Items ===
+                    Dim itemList As New List(Of String)
+                    Dim qtyList As New List(Of String)
+                    Dim totalQty As Integer = rand.Next(1, 5)
+                    Dim subtotal As Decimal = 0
+
+                    For j As Integer = 1 To totalQty
+                        Dim item As String = fakeItems(rand.Next(fakeItems.Length))
+                        Dim qty As Integer = rand.Next(1, 4)
+                        Dim price As Decimal = rand.Next(50, 200)
+
+                        itemList.Add(item)
+                        qtyList.Add(qty.ToString())
+                        subtotal += qty * price
+                    Next
+
+                    Dim discount As Decimal = If(rand.NextDouble() < 0.3, rand.Next(0, 50), 0)
+                    Dim netAmount As Decimal = subtotal - discount
+                    Dim processedBy As String = Environment.UserName & " (Admin)"
+
+                    ' === Insert Customer and get CID ===
+                    Dim cid As Integer
+                    Dim custCmd As New MySqlCommand("
+                    INSERT INTO customer 
+                    (FirstName, LastName, PhoneNumber, Address, TableNumber, ItemsOrdered, QTY, TransactionType, 
+                     OrderStatus, TimeOrdered, DateOrdered, SubTotal, DiscountAmount, NetAmount, PaymentMethod, 
+                     ReceiptNumber, RefundStatus, DateRecorded, ProcessedBy, Notes) 
+                    VALUES 
+                    (@fn, @ln, @ph, @addr, @tbl, @items, @qty, @ttype, 'Pending', NOW(), NOW(), 
+                     @sub, @disc, @net, @pmethod, @rnum, 'No', NOW(), @user, '')", conn)
+
+                    With custCmd.Parameters
+                        .AddWithValue("@fn", fname)
+                        .AddWithValue("@ln", lname)
+                        .AddWithValue("@ph", phone)
+                        .AddWithValue("@addr", addr)
+                        .AddWithValue("@tbl", tbl)
+                        .AddWithValue("@items", String.Join(", ", itemList))
+                        .AddWithValue("@qty", String.Join(", ", qtyList))
+                        .AddWithValue("@ttype", transactionType)
+                        .AddWithValue("@sub", subtotal)
+                        .AddWithValue("@disc", If(discount = 0, DBNull.Value, discount))
+                        .AddWithValue("@net", netAmount)
+                        .AddWithValue("@pmethod", paymentMethod)
+                        .AddWithValue("@rnum", receiptNumber)
+                        .AddWithValue("@user", processedBy)
+                    End With
+
+                    custCmd.ExecuteNonQuery()
+                    cid = CInt(custCmd.LastInsertedId)
+
+                    ' === Insert Sale for same CID ===
+                    Dim salesCmd As New MySqlCommand("
+                    INSERT INTO sales 
+                    (CID, ReceiptNumber, TimeOrdered, DateOrdered, ItemsOrdered, QTY, SubTotal, 
+                     DiscountAmount, NetAmount, PaymentMethod, TransactionType, OrderStatus, RefundStatus, 
+                     DateRecorded, ProcessedBy, Notes) 
+                    VALUES 
+                    (@cid, @rnum, NOW(), NOW(), @items, @qty, @sub, @disc, @net, @pmethod, 
+                     @ttype, 'Pending', 'No', NOW(), @user, '')", conn)
+
+                    With salesCmd.Parameters
+                        .AddWithValue("@cid", cid)
+                        .AddWithValue("@rnum", receiptNumber)
+                        .AddWithValue("@items", String.Join(", ", itemList))
+                        .AddWithValue("@qty", String.Join(", ", qtyList))
+                        .AddWithValue("@sub", subtotal)
+                        .AddWithValue("@disc", If(discount = 0, DBNull.Value, discount))
+                        .AddWithValue("@net", netAmount)
+                        .AddWithValue("@pmethod", paymentMethod)
+                        .AddWithValue("@ttype", transactionType)
+                        .AddWithValue("@user", processedBy)
+                    End With
+
+                    salesCmd.ExecuteNonQuery()
+                Next
+            End Using
+
+            MessageBox.Show("5000 random records inserted successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+        Catch ex As Exception
+            MessageBox.Show("Error inserting bulk data: " & ex.Message, "Insert Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
 
 
 End Class
